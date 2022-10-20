@@ -13,6 +13,26 @@ class ImageViewer(QtWidgets.QLabel):
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
         self.clicked.emit(event.position().toTuple())
 
+class RGBPicker(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+    
+        self.r_val_input = QtWidgets.QLineEdit()
+        self.r_val_input.setPlaceholderText("Red channel value")
+        self.g_val_input = QtWidgets.QLineEdit()
+        self.g_val_input.setPlaceholderText("Greeen channel value")
+        self.b_val_input = QtWidgets.QLineEdit()
+        self.b_val_input.setPlaceholderText("Blue channel value")
+
+        self.layout = QtWidgets.QHBoxLayout()
+
+        self.setLayout(self.layout)
+
+        self.layout.addWidget(self.r_val_input)
+        self.layout.addWidget(self.g_val_input)
+        self.layout.addWidget(self.b_val_input)
+
+
 class MetaDataValues(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()

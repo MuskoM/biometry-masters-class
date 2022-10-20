@@ -7,7 +7,7 @@ from PySide6 import QtCore, QtWidgets, QtGui
 from PIL import Image
 
 from nviImage import NviImage, convert_cv_qt, check_boundaries
-from nviWidgets import ImageViewer, MetaDataValues
+from nviWidgets import ImageViewer, MetaDataValues, RGBPicker
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self) -> None:
@@ -24,6 +24,7 @@ class MyWidget(QtWidgets.QWidget):
         
         # Shown widgets
         self.info = MetaDataValues()
+        self.picker = RGBPicker()
         self.image = ImageViewer()
         self.open_file_btn = QtWidgets.QPushButton('Open file')
         self.save_file_btn = QtWidgets.QPushButton('Save')
@@ -31,6 +32,7 @@ class MyWidget(QtWidgets.QWidget):
         # Layout
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.info)
+        self.layout.addWidget(self.picker)
         self.layout.addWidget(self.image)
         self.layout.addWidget(self.open_file_btn)
         self.layout.addWidget(self.save_file_btn)
@@ -39,6 +41,7 @@ class MyWidget(QtWidgets.QWidget):
         self.image.setVisible(False)
         self.image.setMouseTracking(False)
         self.info.setVisible(False)
+        self.picker.setVisible(False)
 
         # Actions
         self.open_file_btn.clicked.connect(self.openFile)
@@ -52,9 +55,6 @@ class MyWidget(QtWidgets.QWidget):
         if check_boundaries(pos,((0,self.loaded_image.cv_image.shape[1]),(0,self.loaded_image.cv_image.shape[0]))):
             self.info.set_position(pos[0], pos[1])
             self.info.set_color_values(*self.loaded_image.cv_image[int(pos[1]),int(pos[0])])
-            # text_RGB = str(self.loaded_image.cv_image[int(pos[1]),int(pos[0])])
-            # text_POS = str(f'X:{pos[0]}, Y:{pos[1]}')
-            # self.position.setText(f'{text_POS} {text_RGB}')
 
     @QtCore.Slot(tuple)
     def changeColor(self, pos):
@@ -83,6 +83,7 @@ class MyWidget(QtWidgets.QWidget):
         self.image.setVisible(True)
         self.info.setVisible(True)
         self.image.setMouseTracking(True)
+        self.picker.setVisible(True)
 
 
 def run():
