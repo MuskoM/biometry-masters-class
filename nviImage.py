@@ -1,3 +1,5 @@
+from pathlib import Path
+from pprint import pprint
 import typing as t
 from xmlrpc.client import boolean
 
@@ -43,13 +45,34 @@ class NviImage:
         }
 
         converted_image = load_strategy[use_type](name)
-        print(converted_image.size)
         return NviImage(converted_image)
 
     def __init__(self, image: Image = None):
         self._image: Image = image
         self._width = self.image.size[0]
         self._height = self.image.size[1]
+
+    def to_file(self, file_path: str):
+        path = Path(file_path)
+        if path.name.split('.')[1] == 'svg':
+            median = np.median(self.cv_image)
+            sigma = 120
+            lower = int(max(0, (1.0 - sigma) * median))
+            upper = int(min(255, (1.0 + sigma) * median))
+            grayscale_image = cv.Canny(self.cv_image, lower, upper)
+            c = np.array(grayscale_image) #max contour
+            with open(path, 'w+') as f:
+                f.write('<svg width="'+str(self.width)+'" height="'+str(self.height)+'" xmlns="http://www.w3.org/2000/svg">')
+                f.write('<path d="M')
+
+                for i in range(len(c)):
+                    x= c[i]
+                    f.write(str(x)+  ' ')
+
+                f.write('"/>')
+                f.write('</svg>')
+        else:
+            cv.imwrite(str(path), self.cv_image)
 
     @property
     def shape(self):
@@ -67,11 +90,14 @@ class NviImage:
     def image(self):
         return self._image
 
+    @image.setter
+    def image(self, image: Image):
+        self._image = image
+
     @property
     def cv_image(self) -> cv.Mat:
         arr_img = np.array(self._image)
         return cv.cvtColor(arr_img, cv.COLOR_RGB2BGR)
-    
 
 def convert_cv_qt(cv_img, width, height):
     """Convert from an opencv image to QPixmap"""

@@ -13,6 +13,22 @@ class ImageViewer(QtWidgets.QLabel):
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
         self.clicked.emit(event.position().toTuple())
 
+    def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
+        if event.angleDelta().y() > 0:
+            self.zoomIn()
+        else:
+            self.zoomOut()
+    
+    def zoomIn(self):
+        self._scaleImage(1.2)
+
+    def zoomOut(self):
+        self._scaleImage(0.8)
+
+    def _scaleImage(self, factor: float):
+        px = self.pixmap().scaled(self.pixmap().size() * factor, QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
+        self.setPixmap(px)
+
 class RGBPicker(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -31,7 +47,9 @@ class RGBPicker(QtWidgets.QWidget):
         self.layout.addWidget(self.r_val_input)
         self.layout.addWidget(self.g_val_input)
         self.layout.addWidget(self.b_val_input)
-
+    
+    def get_bgr_values(self):
+        return self.b_val_input.text(), self.g_val_input.text(), self.r_val_input.text()
 
 class MetaDataValues(QtWidgets.QWidget):
     def __init__(self):

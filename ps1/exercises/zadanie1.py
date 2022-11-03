@@ -5,6 +5,7 @@ import sys
 import cv2 as cv
 from PySide6 import QtCore, QtWidgets, QtGui
 from PIL import Image
+from PIL import ImageQt
 
 from nviImage import NviImage, convert_cv_qt, check_boundaries
 from nviWidgets import ImageViewer, MetaDataValues, RGBPicker
@@ -25,6 +26,7 @@ class MyWidget(QtWidgets.QWidget):
         # Shown widgets
         self.info = MetaDataValues()
         self.picker = RGBPicker()
+        self.scrollArea = QtWidgets.QScrollArea()
         self.image = ImageViewer()
         self.open_file_btn = QtWidgets.QPushButton('Open file')
         self.save_file_btn = QtWidgets.QPushButton('Save')
@@ -33,11 +35,14 @@ class MyWidget(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.info)
         self.layout.addWidget(self.picker)
-        self.layout.addWidget(self.image)
+        self.layout.addWidget(self.scrollArea)
         self.layout.addWidget(self.open_file_btn)
         self.layout.addWidget(self.save_file_btn)
 
         # Setup
+        self.scrollArea.setBackgroundRole(QtGui.QPalette.ColorRole.Highlight)
+        self.scrollArea.setWidget(self.image)
+        self.scrollArea.setVisible(False)
         self.image.setVisible(False)
         self.image.setMouseTracking(False)
         self.info.setVisible(False)
@@ -59,13 +64,15 @@ class MyWidget(QtWidgets.QWidget):
     @QtCore.Slot(tuple)
     def changeColor(self, pos):
         if check_boundaries(pos,((0,self.loaded_image.cv_image.shape[1]),(0,self.loaded_image.cv_image.shape[0]))):
-            self.displayed_image[int(pos[1]),int(pos[0])] = [255, 0, 0]
+            self.displayed_image[int(pos[1]),int(pos[0])] = [*self.picker.get_bgr_values()]
             qt_image = convert_cv_qt(self.displayed_image, self.display_width,self.display_height)
             self.image.setPixmap(qt_image)
 
     @QtCore.Slot()
     def saveFile(self):
-        cv.imwrite(self.loaded_image)
+        file_name, type = self.openFileWidget.getSaveFileName(filter="Images (*.jpeg *.tiff *.png *.bmp *.jpg *.svg)")
+        self.loaded_image.image = ImageQt.fromqpixmap(self.image.pixmap())
+        self.loaded_image.to_file(file_name)
 
 
     @QtCore.Slot()
@@ -82,6 +89,8 @@ class MyWidget(QtWidgets.QWidget):
             self.image.setText(f"Failed to read file {e}")
         self.image.setVisible(True)
         self.info.setVisible(True)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setVisible(True)
         self.image.setMouseTracking(True)
         self.picker.setVisible(True)
 
