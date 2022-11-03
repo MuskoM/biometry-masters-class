@@ -26,7 +26,6 @@ class MyWidget(QtWidgets.QWidget):
         # Shown widgets
         self.info = MetaDataValues()
         self.picker = RGBPicker()
-        self.scrollArea = QtWidgets.QScrollArea()
         self.image = ImageViewer()
         self.open_file_btn = QtWidgets.QPushButton('Open file')
         self.save_file_btn = QtWidgets.QPushButton('Save')
@@ -34,15 +33,12 @@ class MyWidget(QtWidgets.QWidget):
         # Layout
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.info)
+        self.layout.addWidget(self.image)
         self.layout.addWidget(self.picker)
-        self.layout.addWidget(self.scrollArea)
         self.layout.addWidget(self.open_file_btn)
         self.layout.addWidget(self.save_file_btn)
 
         # Setup
-        self.scrollArea.setBackgroundRole(QtGui.QPalette.ColorRole.Highlight)
-        self.scrollArea.setWidget(self.image)
-        self.scrollArea.setVisible(False)
         self.image.setVisible(False)
         self.image.setMouseTracking(False)
         self.info.setVisible(False)
@@ -84,13 +80,13 @@ class MyWidget(QtWidgets.QWidget):
             self.display_width = self.loaded_image.width
             self.displayed_image = self.loaded_image.cv_image
             qt_image = convert_cv_qt(self.displayed_image,self.display_width,self.display_height)
-            self.image.setPixmap(qt_image)
+            scene = QtWidgets.QGraphicsScene()
+            scene.addPixmap(qt_image)
+            self.image.setScene(scene)
         except Exception as e:
             self.image.setText(f"Failed to read file {e}")
         self.image.setVisible(True)
         self.info.setVisible(True)
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setVisible(True)
         self.image.setMouseTracking(True)
         self.picker.setVisible(True)
 

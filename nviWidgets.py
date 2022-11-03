@@ -1,33 +1,26 @@
 from PySide6 import QtCore, QtWidgets, QtGui
 
-class ImageViewer(QtWidgets.QLabel):
+class ImageViewer(QtWidgets.QGraphicsView):
     moved = QtCore.Signal(tuple)
     clicked = QtCore.Signal(tuple)
 
     def __init__(self):
         super().__init__()
     
-    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> tuple:
-        self.moved.emit(event.position().toTuple()) 
+    def print_position(self, event):
+        print(event)
 
-    def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
-        self.clicked.emit(event.position().toTuple())
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        self.moved.emit(event.position().toTuple())
+        return super().mouseMoveEvent(event)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         if event.angleDelta().y() > 0:
-            self.zoomIn()
+            self.centerOn(event.position())
+            self.scale(1.25, 1.25)
         else:
-            self.zoomOut()
-    
-    def zoomIn(self):
-        self._scaleImage(1.2)
-
-    def zoomOut(self):
-        self._scaleImage(0.8)
-
-    def _scaleImage(self, factor: float):
-        px = self.pixmap().scaled(self.pixmap().size() * factor, QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
-        self.setPixmap(px)
+            self.centerOn(event.position())
+            self.scale(0.8, 0.8)
 
 class RGBPicker(QtWidgets.QWidget):
     def __init__(self):
