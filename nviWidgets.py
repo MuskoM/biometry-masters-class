@@ -5,6 +5,7 @@ class ImageViewer(QtWidgets.QLabel):
     clicked = QtCore.Signal(tuple)
 
     def __init__(self):
+        self._zoom_level = 0
         super().__init__()
     
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> tuple:
@@ -14,16 +15,20 @@ class ImageViewer(QtWidgets.QLabel):
         self.clicked.emit(event.position().toTuple())
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
+        print(self._zoom_level)
         if event.angleDelta().y() > 0:
             self.zoomIn()
         else:
             self.zoomOut()
     
     def zoomIn(self):
-        self._scaleImage(1.2)
+        self._scaleImage(1.25)
+        self._zoom_level += 1
 
     def zoomOut(self):
-        self._scaleImage(0.8)
+        if self._zoom_level > 0:
+            self._scaleImage(0.8)
+            self._zoom_level -= 1
 
     def _scaleImage(self, factor: float):
         px = self.pixmap().scaled(self.pixmap().size() * factor, QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
