@@ -1,6 +1,7 @@
 import argparse
 import sys
 import ps1.main as ps1
+from ps2 import main as ps2
 
 if __name__ == '__main__':
     lesson = 0
@@ -13,7 +14,8 @@ if __name__ == '__main__':
     exercise = args.zad
 
     lessons = {
-        '1' : ps1.run
+        '1' : ps1.run,
+        '2': ps2.run
     }
     
     print(f'Starting PS {lesson}')
