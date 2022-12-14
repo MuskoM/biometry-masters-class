@@ -1,14 +1,7 @@
-import sys
-import typing as t
-import inspect
-
 import cv2
 import numpy as np
 import mediapipe as mp
 from dataclasses import dataclass
-from imutils import paths
-import numpy as np
-import cv2
 import os
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
@@ -17,8 +10,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from skimage.exposure import rescale_intensity
 from imutils import build_montages
-import numpy as np
-import time
 
 from PySide6 import (
     QtCore as QCore,
@@ -32,6 +23,7 @@ class Landmark:
     y: float
     z: float
 
+subjects = ["", "georgebush", "kinga", "mateusz", "venus_williams", "winona_ryder"]
 faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
 eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
 mouth_cascade = cv2.CascadeClassifier('public/cascade_classifiers/haarcascade_mcs_mouth.xml')
@@ -88,48 +80,83 @@ def load_faces(inputPath):
             cv2.imshow("Training on image", image)
             cv2.waitKey(100)
             # img_from_haar = detectAndDisplay(image)
+            print(f'Detecting face \n')
             face, faceROI = detectFace(image)
             if face is not None:
+                print(f'Face detected for {imagePath}\n')
+                face = cv2.resize(face, (47,62))
                 faces.append(face)
                 labels.append(label)
+            else:
+                print(f'Face not detected in {imagePath}')
     cv2.destroyAllWindows()
     cv2.waitKey(1)
     cv2.destroyAllWindows()
     return faces, labels
 
+def predict(img, face_recognizer):
+    #make a copy of the image as we don't want to chang original image
+    img = img.copy()
+    #detect face from the image
+    face, rect = detectFace(img)
+    face = cv2.resize(face, (47,62))
+    #predict the image using our face recognizer 
+    label, confidence = face_recognizer.predict(face)
+    #get name of respective label returned by face recognizer
+    label_text = subjects[label]
+    
+    #draw a rectangle around face detected
+    (x, y, w, h) = rect
+    cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    #draw name of predicted person
+    cv2.putText(img, label_text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2)
+    
+    return img
+
 def run(zadanie: int):
-    # # Get camera
-    # cap = cv2.VideoCapture(0)
-
-    # #Check if camera is available
-    # if not cap.isOpened():
-    #     print("Cannot open camera")
-    #     exit()
-
+    print("Preparing training data\n")
     faces, labels = load_faces("ps3/zdjecia/treningowe")
+    print("Data successfully read")
+    print(f'Faces detected: {len(faces)}')
+    print(f'Total labels: ', len(labels))
 
+    recognise = cv2.face.EigenFaceRecognizer_create()  
+    recognise.train(faces, np.array(labels))
 
-    # landmarks = saved_landmarks
-    #     # Display the resulting frame
-    # while True:
-    #     cv2.imshow('Using available tools', img_from_haar)
-    #     if cv2.waitKey(1) == ord('q'):
-    #         break
-    # # EventLoop
-    # while True:
-    #     # Capture frame-by-frame
-    #     ret, frame = cap.read()
+    # imgPath = "ps3/zdjecia/treningowe/kinga_2/kinga_2.jpg"
+    # print(f'Predicting image: {imgPath}')    
+    # test_img = cv2.imread(imgPath)
+    # cv2.imshow("test", test_img)
+    # cv2.waitKey(1000)
+
+    # predicted_img1 = predict(test_img,recognise)
+    # cv2.imshow("Predicted", predicted_img1)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    # recognise.read("Recogniser/trainingDataEigan.xml")
+
+    # Get camera
+    cap = cv2.VideoCapture(0)
+
+    #Check if camera is available
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+
+    # EventLoop
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
         
-    #     # if frame is read correctly ret is Trueq
-    #     if not ret:
-    #         print("Can't receive frame (stream end?). Exiting ...")
-    #         break
+        # if frame is read correctly ret is Trueq
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
 
-    #     img_from_haar, saved_landmarks = detectAndDisplay(frame, landmarks)
-    #     landmarks = saved_landmarks
-    #     # Display the resulting frame
-    #     cv2.imshow('Using available tools', img_from_haar)
-    #     if cv2.waitKey(1) == ord('q'):
-    #         break
-    # # When everything done, release the capture
-    # cap.release()
+        predicted_img = predict(frame, recognise)
+
+        cv2.imshow("Predicted image", predicted_img)
+        if cv2.waitKey(1) == ord('q'):
+            break
+    # When everything done, release the capture
+    cap.release()
