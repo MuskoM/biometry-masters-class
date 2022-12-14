@@ -40,63 +40,64 @@ mpDraw = mp.solutions.drawing_utils
 mpFaceMesh = mp.solutions.face_mesh
 mp_drawing_styles = mp.solutions.drawing_styles
 drawing_spec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
-faceMesh = mpFaceMesh.FaceMesh(max_num_faces=2, refine_landmarks=True, min_detection_confidence=0.5)
+faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1, refine_landmarks=True, min_detection_confidence=0.5)
     
-def detectAndDisplay(frame, saved_landmarks):
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame_gray = cv2.equalizeHist(frame_gray)
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = faceMesh.process(frame_rgb)
+def detectAndDisplay(img, scaleFactor=1.2, minNeighbors=5):
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    if results.multi_face_landmarks:
-        for faceLms in results.multi_face_landmarks:
-            landmarks = [x for x in faceLms.ListFields()]
-            landmarks = landmarks[0][1][:10]
-            if saved_landmarks is None:
-                saved_landmarks = landmarks
-            saved_landmarks = landmarks
-            mpDraw.draw_landmarks(frame, faceLms, landmark_drawing_spec=drawing_spec)
-
-    faces = faces_cascade.detectMultiScale(frame_gray)
+    faces = faces_cascade.detectMultiScale(img_gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
     for x,y,w,h in faces:
-        faceROI = frame_gray[y:y+h, x: x+w]
-
-        eyes = eyes_cascade.detectMultiScale(faceROI)
+        faceROI = img_gray[y:y+w, x:x+h]
+        eyes = eyes_cascade.detectMultiScale(faceROI, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
         for (xe,ye,we,he) in eyes:
             eye_center = (x + xe + we//2, y + ye + he//2 )
             radius = int(round(we+he)*0.25)
-            frame = cv2.circle(frame,eye_center, radius, (255,0,0), 4)
+            img = cv2.circle(img,eye_center, radius, (255,0,0), 4)
         
-        mouth_rects = mouth_cascade.detectMultiScale(faceROI)
+        mouth_rects = mouth_cascade.detectMultiScale(faceROI, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
         for (xm,ym,wm,hm) in mouth_rects:
-            frame = cv2.rectangle(frame, (x+xm,y+ym), (x + xm + wm, y + ym + hm), (0,255,0),3)
+            img = cv2.rectangle(img, (x+xm,y+ym), (x + xm + wm, y + ym + hm), (0,255,0),3)
             break
+        img = cv2.rectangle(img, (x,y), (x + w, y + h), (0,0,255),3)
+    return img 
 
-    return frame, saved_landmarks, 
+def detectFace(img, scaleFactor=1.2, minNeighbors=5):
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = faces_cascade.detectMultiScale(img_gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
+    
+    if (len(faces) == 0):
+        return None, None
+    (x, y, w, h) = faces[0]
+    return img_gray[y:y+w, x:x+h], faces[0]
 
 def load_faces(inputPath):
-    imagePaths = list(paths.list_images(inputPath))
-    print(f'imagePaths: {imagePaths}\n')
-    names = [p.split(os.path.sep)[-2] for p in imagePaths]
-    print(f'names: {names}')
-    (names, counts) = np.unique(names, return_counts=True)
-    names = names.tolist()
+    dirs = os.listdir(inputPath)
 
     faces = []
     labels = []
-
-    for imagePath in imagePaths:
-        landmarks = []
-        image = cv2.imread(imagePath)
-        img_from_haar, saved_landmarks = detectAndDisplay(image, landmarks)
-        cv2.imshow('Using available tools', img_from_haar)
-        while True:
-            if cv2.waitKey(1) == ord('q'):
-                break
+    
+    for dir_name in dirs:
+        label = int(dir_name.split("_")[-1])
+        subject_dir_path = inputPath + "/" + dir_name
+        imageNames = os.listdir(subject_dir_path)
+        for imageName in imageNames:
+            imagePath = subject_dir_path + "/" + imageName
+            print(f'Reading file {imagePath}...\n')
+            image = cv2.imread(imagePath)
+            cv2.imshow("Training on image", image)
+            cv2.waitKey(100)
+            # img_from_haar = detectAndDisplay(image)
+            face, faceROI = detectFace(image)
+            if face is not None:
+                faces.append(face)
+                labels.append(label)
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+    cv2.destroyAllWindows()
     return faces, labels
 
 def run(zadanie: int):
-    landmarks = []
     # # Get camera
     # cap = cv2.VideoCapture(0)
 
@@ -104,10 +105,6 @@ def run(zadanie: int):
     # if not cap.isOpened():
     #     print("Cannot open camera")
     #     exit()
-
-    lower = np.array(80)
-    upper = np.array(230)
-    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
 
     faces, labels = load_faces("ps3/zdjecia/treningowe")
 
