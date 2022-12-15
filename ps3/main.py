@@ -34,7 +34,8 @@ mp_drawing_styles = mp.solutions.drawing_styles
 drawing_spec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
 faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1, refine_landmarks=True, min_detection_confidence=0.5)
     
-def detectAndDisplay(img, scaleFactor=1.2, minNeighbors=5):
+def detectAndDisplay(source_img, scaleFactor=1.2, minNeighbors=5):
+    img = source_img.copy()
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     faces = faces_cascade.detectMultiScale(img_gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
@@ -53,7 +54,8 @@ def detectAndDisplay(img, scaleFactor=1.2, minNeighbors=5):
         img = cv2.rectangle(img, (x,y), (x + w, y + h), (0,0,255),3)
     return img 
 
-def detectFace(img, scaleFactor=1.2, minNeighbors=5):
+def detectFace(source_img, scaleFactor=1.2, minNeighbors=5):
+    img = source_img.copy()
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     faces = faces_cascade.detectMultiScale(img_gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
@@ -94,16 +96,17 @@ def load_faces(inputPath):
     cv2.destroyAllWindows()
     return faces, labels
 
-def predict(img, face_recognizer):
-    #make a copy of the image as we don't want to chang original image
-    img = img.copy()
-    #detect face from the image
+def predict(source_img, face_recognizer):
+    img = source_img.copy()
+    print(f'Detecting face to predict')
     face, rect = detectFace(img)
+    if face is None:
+        print(f'Face not detected from camera')
+        return source_img
     face = cv2.resize(face, (47,62))
-    #predict the image using our face recognizer 
     label, confidence = face_recognizer.predict(face)
-    #get name of respective label returned by face recognizer
-    label_text = subjects[label]
+
+    label_text = f'{subjects[label]} conficence: {confidence}'
     
     #draw a rectangle around face detected
     (x, y, w, h) = rect
@@ -122,18 +125,6 @@ def run(zadanie: int):
 
     recognise = cv2.face.EigenFaceRecognizer_create()  
     recognise.train(faces, np.array(labels))
-
-    # imgPath = "ps3/zdjecia/treningowe/kinga_2/kinga_2.jpg"
-    # print(f'Predicting image: {imgPath}')    
-    # test_img = cv2.imread(imgPath)
-    # cv2.imshow("test", test_img)
-    # cv2.waitKey(1000)
-
-    # predicted_img1 = predict(test_img,recognise)
-    # cv2.imshow("Predicted", predicted_img1)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # recognise.read("Recogniser/trainingDataEigan.xml")
 
     # Get camera
     cap = cv2.VideoCapture(0)
