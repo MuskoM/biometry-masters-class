@@ -3,19 +3,6 @@ import numpy as np
 import mediapipe as mp
 from dataclasses import dataclass
 import os
-from sklearn.preprocessing import LabelEncoder
-from sklearn.decomposition import PCA
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from skimage.exposure import rescale_intensity
-from imutils import build_montages
-
-from PySide6 import (
-    QtCore as QCore,
-    QtGui as QGui,
-    QtWidgets as QWidgets,
-)
 
 @dataclass
 class Landmark:
@@ -23,7 +10,7 @@ class Landmark:
     y: float
     z: float
 
-subjects = ["", "georgebush", "kinga", "mateusz", "venus_williams", "winona_ryder"]
+subjects = ["", "George_W_Bush", "Kinga", "Mateusz", "Winona_Ryder"]
 faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
 eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
 mouth_cascade = cv2.CascadeClassifier('public/cascade_classifiers/haarcascade_mcs_mouth.xml')
@@ -120,7 +107,8 @@ def predict(source_img, face_recognizer):
         face = cv2.resize(face, (47,62))
         label, confidence = face_recognizer.predict(face)
 
-        label_text = f'{subjects[label]} conficence: {confidence}'
+        confidence = round(100 * (1000 / confidence), 2)
+        label_text = f'{subjects[label]} {confidence}%'
         
         #draw a rectangle around face detected
         (x, y, w, h) = rects[idx]
