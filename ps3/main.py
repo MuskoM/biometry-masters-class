@@ -3,12 +3,17 @@ import numpy as np
 import mediapipe as mp
 from dataclasses import dataclass
 import os
+import datetime
 
 @dataclass
 class Landmark:
     x: float
     y: float
     z: float
+
+train_dataset_path = "ps3/zdjecia/captured"
+captured_images_path = "ps3/zdjecia/captured"
+temp_dir = "temp"
 
 subjects = []
 faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
@@ -71,6 +76,8 @@ def load_faces(inputPath):
     labels = []
     
     for dir_name in dirs:
+        if (dir_name == temp_dir):
+            continue
         label = len(subjects)
         subjects.append(dir_name)
         subject_dir_path = inputPath + "/" + dir_name
@@ -130,8 +137,8 @@ def trainOnData(inputPath):
     recognise.train(faces, np.array(labels))
     return recognise
 
-def run(zadanie: int):
-    model = trainOnData("ps3/zdjecia/treningowe")
+def recognize():
+    model = trainOnData(train_dataset_path)
 
     # Get camera
     cap = cv2.VideoCapture(0)
@@ -158,3 +165,45 @@ def run(zadanie: int):
             break
     # When everything done, release the capture
     cap.release()
+
+def captureSamples():
+    # Get camera
+    cap = cv2.VideoCapture(0)
+
+    #Check if camera is available
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+
+    # EventLoop
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        
+        # if frame is read correctly ret is Trueq
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break   
+        cv2.imshow("Camera capture", frame)
+        if cv2.waitKey(1) == ord('q'):
+            break
+        elif cv2.waitKey(1) == ord('s'):
+            tempPath = f'{captured_images_path}/{temp_dir}'
+            isExist = os.path.exists(tempPath)
+            if not isExist:
+            # Create a new directory because it does not exist 
+                os.makedirs(tempPath)
+                print("The new directory is created!")
+
+            img_path = f'{tempPath}/img_{int(datetime.datetime.now().timestamp())}.jpg'
+            print(f'Save to file path: {img_path}')
+            cv2.imwrite(img_path, frame)
+    # When everything done, release the capture
+    cap.release()
+
+def run(zadanie: int):
+    if (int(zadanie) == 1):
+        recognize()
+    elif (int(zadanie) == 2):
+        captureSamples()
+   
