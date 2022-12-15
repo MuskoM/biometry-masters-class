@@ -118,15 +118,19 @@ def predict(source_img, face_recognizer):
     
     return img
 
-def run(zadanie: int):
+def trainOnData(inputPath):
     print("Preparing training data\n")
-    faces, labels = load_faces("ps3/zdjecia/treningowe")
+    faces, labels = load_faces(inputPath)
     print("Data successfully read")
     print(f'Faces detected: {len(faces)}')
     print(f'Total labels: ', len(labels))
 
     recognise = cv2.face.EigenFaceRecognizer_create()  
     recognise.train(faces, np.array(labels))
+    return recognise
+
+def run(zadanie: int):
+    model = trainOnData("ps3/zdjecia/treningowe")
 
     # Get camera
     cap = cv2.VideoCapture(0)
@@ -146,7 +150,7 @@ def run(zadanie: int):
             print("Can't receive frame (stream end?). Exiting ...")
             break
 
-        predicted_img = predict(frame, recognise)
+        predicted_img = predict(frame, model)
 
         cv2.imshow("Predicted image", predicted_img)
         if cv2.waitKey(1) == ord('q'):
