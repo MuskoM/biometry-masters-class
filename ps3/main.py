@@ -10,7 +10,7 @@ class Landmark:
     y: float
     z: float
 
-subjects = ["", "George_W_Bush", "Kinga", "Mateusz", "Winona_Ryder"]
+subjects = []
 faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
 eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
 mouth_cascade = cv2.CascadeClassifier('public/cascade_classifiers/haarcascade_mcs_mouth.xml')
@@ -19,7 +19,7 @@ mpDraw = mp.solutions.drawing_utils
 mpFaceMesh = mp.solutions.face_mesh
 mp_drawing_styles = mp.solutions.drawing_styles
 drawing_spec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
-faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1, refine_landmarks=True, min_detection_confidence=0.5)
+faceMesh = mpFaceMesh.FaceMesh(max_num_faces=3, refine_landmarks=True, min_detection_confidence=0.5)
     
 def detectAndDisplay(source_img, scaleFactor=1.2, minNeighbors=5):
     img = source_img.copy()
@@ -71,7 +71,8 @@ def load_faces(inputPath):
     labels = []
     
     for dir_name in dirs:
-        label = int(dir_name.split("_")[-1])
+        label = len(subjects)
+        subjects.append(dir_name)
         subject_dir_path = inputPath + "/" + dir_name
         imageNames = os.listdir(subject_dir_path)
         for imageName in imageNames:
