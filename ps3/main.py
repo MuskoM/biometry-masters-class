@@ -195,9 +195,10 @@ def captureSamples():
             print("Can't receive frame (stream end?). Exiting ...")
             break   
         cv2.imshow("Camera capture", frame)
-        if cv2.waitKey(1) == ord('q'):
+        key = cv2.waitKey(1)
+        if key == ord('q'):
             break
-        elif cv2.waitKey(1) == ord('s'):
+        elif key == ord('s'):
             isExist = os.path.exists(tempPath)
             if not isExist:
             # Create a new directory because it does not exist 
