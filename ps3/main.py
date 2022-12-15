@@ -69,14 +69,17 @@ def load_faces(inputPath):
 
     faces = []
     labels = []
-    
+    if (dirs == None):
+        return None, None
     for dir_name in dirs:
         if (dir_name == temp_dir):
             continue
         label = len(subjects)
-        subjects.append(dir_name)
         subject_dir_path = inputPath + "/" + dir_name
         imageNames = os.listdir(subject_dir_path)
+        if (imageNames == None):
+            continue
+        subjects.append(dir_name)
         for imageName in imageNames:
             imagePath = subject_dir_path + "/" + imageName
             print(f'Reading file {imagePath}...\n')
@@ -96,6 +99,8 @@ def load_faces(inputPath):
     cv2.destroyAllWindows()
     cv2.waitKey(1)
     cv2.destroyAllWindows()
+    if (len(faces) == 0) or (len(labels) == 0):
+        return None, None
     return faces, labels
 
 def predict(source_img, face_recognizer):
@@ -124,6 +129,8 @@ def predict(source_img, face_recognizer):
 def trainOnData(inputPath):
     print("Preparing training data\n")
     faces, labels = load_faces(inputPath)
+    if (faces == None) or (labels == None):
+        return None
     print("Data successfully read")
     print(f'Faces detected: {len(faces)}')
     print(f'Total labels: ', len(labels))
@@ -134,7 +141,9 @@ def trainOnData(inputPath):
 
 def recognize():
     model = trainOnData(train_dataset_path)
-
+    if (model == None):
+        print("No dataset to train model. Stop app...")
+        return
     # Get camera
     cap = cv2.VideoCapture(0)
 
