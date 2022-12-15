@@ -4,14 +4,9 @@ import mediapipe as mp
 from dataclasses import dataclass
 import os
 import datetime
+from PySide6.QtWidgets import QDialog
 
-@dataclass
-class Landmark:
-    x: float
-    y: float
-    z: float
-
-train_dataset_path = "ps3/zdjecia/captured"
+train_dataset_path = "ps3/zdjecia/train"
 captured_images_path = "ps3/zdjecia/captured"
 temp_dir = "temp"
 
@@ -115,7 +110,7 @@ def predict(source_img, face_recognizer):
         face = cv2.resize(face, (47,62))
         label, confidence = face_recognizer.predict(face)
 
-        confidence = round(100 * (1000 / confidence), 2)
+        confidence = round(100*1000/max(confidence,1000), 2)
         label_text = f'{subjects[label]} {confidence}%'
         
         #draw a rectangle around face detected
@@ -165,7 +160,7 @@ def recognize():
             break
     # When everything done, release the capture
     cap.release()
-
+    
 def captureSamples():
     # Get camera
     cap = cv2.VideoCapture(0)
@@ -175,6 +170,12 @@ def captureSamples():
         print("Cannot open camera")
         exit()
 
+    tempPath = f'{captured_images_path}/{temp_dir}'
+    isExist = os.path.exists(tempPath)
+    if not isExist:
+    # Create a new directory because it does not exist 
+        os.makedirs(tempPath)
+        print("The new directory is created!")
     # EventLoop
     while True:
         # Capture frame-by-frame
@@ -188,7 +189,6 @@ def captureSamples():
         if cv2.waitKey(1) == ord('q'):
             break
         elif cv2.waitKey(1) == ord('s'):
-            tempPath = f'{captured_images_path}/{temp_dir}'
             isExist = os.path.exists(tempPath)
             if not isExist:
             # Create a new directory because it does not exist 
@@ -200,10 +200,19 @@ def captureSamples():
             cv2.imwrite(img_path, frame)
     # When everything done, release the capture
     cap.release()
+    label = input('Enter your label: ')
+    images = os.listdir(tempPath)
+    labelPath = f'{train_dataset_path}/{label}'
+    isExist = os.path.exists(labelPath)
+    if not isExist:
+    # Create a new directory because it does not exist 
+        os.makedirs(labelPath)
+        print("The new directory is created!")
+    for imagePath in images:
+        os.rename(f'{tempPath}/{imagePath}', f'{labelPath}/{imagePath}')
 
 def run(zadanie: int):
     if (int(zadanie) == 1):
         recognize()
     elif (int(zadanie) == 2):
         captureSamples()
-   
