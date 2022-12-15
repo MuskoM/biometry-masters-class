@@ -65,6 +65,18 @@ def detectFace(source_img, scaleFactor=1.2, minNeighbors=5):
     (x, y, w, h) = faces[0]
     return img_gray[y:y+w, x:x+h], faces[0]
 
+def detectAllFaces(source_img, scaleFactor=1.2, minNeighbors=5):
+    img = source_img.copy()
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = faces_cascade.detectMultiScale(img_gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors)
+    rects = []
+    faces_imgs = []
+    for x,y,w,h in faces:
+        rects.append((x,y,w,h))
+        faces_imgs.append(img_gray[y:y+w, x:x+h])
+    return faces_imgs, rects
+
 def load_faces(inputPath):
     dirs = os.listdir(inputPath)
 
@@ -79,7 +91,7 @@ def load_faces(inputPath):
             imagePath = subject_dir_path + "/" + imageName
             print(f'Reading file {imagePath}...\n')
             image = cv2.imread(imagePath)
-            cv2.imshow("Training on image", image)
+            # cv2.imshow("Training on image", image)
             cv2.waitKey(100)
             # img_from_haar = detectAndDisplay(image)
             print(f'Detecting face \n')
@@ -99,20 +111,22 @@ def load_faces(inputPath):
 def predict(source_img, face_recognizer):
     img = source_img.copy()
     print(f'Detecting face to predict')
-    face, rect = detectFace(img)
-    if face is None:
-        print(f'Face not detected from camera')
-        return source_img
-    face = cv2.resize(face, (47,62))
-    label, confidence = face_recognizer.predict(face)
 
-    label_text = f'{subjects[label]} conficence: {confidence}'
-    
-    #draw a rectangle around face detected
-    (x, y, w, h) = rect
-    cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-    #draw name of predicted person
-    cv2.putText(img, label_text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2)
+    faces, rects = detectAllFaces(img)
+    for idx, face in enumerate(faces):
+        if face is None:
+            print(f'Face not detected from camera')
+            continue
+        face = cv2.resize(face, (47,62))
+        label, confidence = face_recognizer.predict(face)
+
+        label_text = f'{subjects[label]} conficence: {confidence}'
+        
+        #draw a rectangle around face detected
+        (x, y, w, h) = rects[idx]
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        #draw name of predicted person
+        cv2.putText(img, label_text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2)
     
     return img
 
