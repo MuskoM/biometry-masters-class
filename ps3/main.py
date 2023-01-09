@@ -116,7 +116,10 @@ def predict(source_img, face_recognizer):
         label, confidence = face_recognizer.predict(face)
 
         confidence = round(100*1000/max(confidence,1000), 2)
-        label_text = f'{subjects[label]} {confidence}%'
+        if (confidence < 30):
+            label_text = 'unknown'
+        else:
+            label_text = f'{subjects[label]} {confidence}%'
         
         #draw a rectangle around face detected
         (x, y, w, h) = rects[idx]
@@ -157,7 +160,7 @@ def recognize():
         # Capture frame-by-frame
         ret, frame = cap.read()
         
-        # if frame is read correctly ret is Trueq
+        # if frame is read correctly ret is True
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
@@ -190,7 +193,7 @@ def captureSamples():
         # Capture frame-by-frame
         ret, frame = cap.read()
         
-        # if frame is read correctly ret is Trueq
+        # if frame is read correctly ret is True
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break   
