@@ -99,8 +99,8 @@ def run(zadanie: int):
         print("Cannot open camera")
         exit()
 
-    lower = np.array(80)
-    upper = np.array(230)
+    lower = np.array(90)
+    upper = np.array(250)
     kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
 
     # EventLoop
@@ -116,10 +116,10 @@ def run(zadanie: int):
         # Face detection using image processing
         bw_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
         img_photo_processing = cv2.inRange(bw_img ,lower, upper)
-        # erode = cv2.erode(img_photo_processing, kernel)
-        # opening = cv2.morphologyEx(erode,cv2.MORPH_OPEN,kernel)
-        # subset = erode - opening
-        # img_photo_processing = cv2.bitwise_or(subset, img_photo_processing)
+        erode = cv2.erode(img_photo_processing, kernel)
+        opening = cv2.morphologyEx(erode,cv2.MORPH_OPEN,kernel)
+        subset = erode - opening
+        img_photo_processing = cv2.bitwise_or(subset, img_photo_processing)
         img_photo_processing = cv2.Sobel(img_photo_processing, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=5)
 
         # Our operations on the frame come here
